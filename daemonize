@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+# TODO: Set the following variables first.
+name=sentry-log
+basedir=/opt/sports/sentry
+
+program=$0
+logdir=${basedir}/logs
+rundir=${basedir}/run
+pidfile=${rundir}/${name}.pid
+
+
+usage()
+{
+  cat <<USAGE
+  ${program} [start (development|integration|production)|stop|restart|status]
+  ${program} help
+USAGE
+  exit ${1:-1}
+}
+
+prepare_dirs()
+{
+  for dir in $basedir $logdir $rundir; do
+    if [ ! -d $dir ]; then
+      echo "Creating dir: $dir ..."
+      mkdir -p $dir
+    fi
+  done
+}
+
+post_action()
+{
+    :
+}
+
+set_vars_by_mode()
+{
+  runmode="./runmode.conf"
+
+  # should set `binary` according to mode
+  if [ ! -f $runmode ]; then
+    echo "Config file missing: $runmode"
+    exit 1
+  fi
+
+  source $runmode
+
+  if [ "x$binary" = "x" ]; then
+    echo "Variable not set: binary"
+    exit 11
+  fi
+}
+
+
+## main
+
+cd $(dirname $0)
+cwd=$(pwd)
+
+if [ $# -lt 1 ]; then
+  usage 1
+fi
+
+daemon=$(test -x /usr/local/bin/daemon && echo /usr/local/bin/daemon || echo /usr/bin/daemon)
+
+prepare_dirs
+
+if [ $1 == "start" ]; then
+  mode=$2
+
+  if [[ ( "x$mode" != "xdevelopment" ) && ( "x$mode" != "xintegration" )
+    && ( "x$mode" != "xproduction" ) ]];
+  then
+    echo "${program} start (development|integration|production)"
+    exit 1
+  fi
+
+  set_vars_by_mode
+
+  $daemon --name=${name} --pidfile ${pidfile} --respawn \
+    --errlog=${logdir}/daemon-error.log \
+    --dbglog=${logdir}/daemon-debug.log \
+    --output=${logdir}/error.log \
+    -D${cwd} -v -- ${binary}
+
+  exit $?
+
+elif [ $1 == "stop" ]; then
+  $daemon --name=${name} --pidfile ${pidfile} --stop
+  exit $?
+
+elif [ $1 == "restart" ]; then
+  $daemon --name=${name} --pidfile ${pidfile} --restart
+  exit $?
+
+elif [ $1 == "status" ]; then
+  $daemon --name=${name} --pidfile ${pidfile} --running
+  if [ $? -eq 0 ]; then
+    echo "Running..."
+  else
+    echo "Not running..."
+  fi
+
+  exit 0
+
+elif [ $1 == "help" ]; then
+  usage 0
+
+else
+  usage 1
+fi
