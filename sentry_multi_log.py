@@ -16,26 +16,10 @@ from log_util import FileObject
 
 
 DNS_DICT = {
-    "userapi": {
-        "dns": ("http://8432296154ce4688a363de17a0a4e05a:"
-                "a9b1b1ab08e54383bb228a40505d93e6@192.168.204.239:9999/2"),
-        "log_path": None
-    },
-    "baseapi": {
-        "dns": ("http://7bc79f1d679b49269b41ba73e1e6c6f8:"
-                "5eb3955148e54df78073071d2ae661ad@192.168.204.239:9999/3"),
-        "log_path": None
-    },
-    "user": {
-        "dns": ("http://c2eaab0e7c3045ae8223fb62aca40a13:"
-                "9c7ab18120ed42baad833dfd753ae3eb@192.168.204.239:9999/4"),
-        "log_path": None
-    },
-    "fastapi": {
-        "dns": ("http://604ad268067e445c97569e9e5ca977c7:"
-                "d40728e158dc4844bdb0930f87f2f76d@192.168.204.239:9999/5"),
+    "project": {
+        "dns": "xx",
         "log_path": None,
-    }
+    },
 }
 
 
