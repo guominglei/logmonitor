@@ -66,7 +66,7 @@ class SentryLog(object):
         self.dns_config = dns_config
         self.server_name = server_name
         self.server_ip = server_ip
-        self.base_dir = basedir
+        self.basedir = basedir
 
         self.__init_info()
         self.__init_sender()
@@ -88,35 +88,36 @@ class SentryLog(object):
         """
             根据dns配置，初始化日志文件信息
         """
-
+        tag = {}
+        log_path = ""
+        log_file = None
         log_template = "{}/{}/logs/{}.log"
 
-        for dns, config_logpath in self.dns_config.items():
+        config_logpath = self.dns_config.get("log_path")
 
-            if not config_logpath:
-                log_path = log_template.format(
-                    self.basedir, self.project, self.project
-                )
-            else:
-                log_path = config_logpath
+        if not config_logpath:
+            log_path = log_template.format(
+                self.basedir, self.project, self.project
+            )
+        else:
+            log_path = config_logpath
 
-            if os.path.exists(log_path):
-                tag = {
-                    "name": self.server_name,
-                    "ip": self.server_ip,
-                    "project": self.project,
-                    "path": log_path
-                }
-                # 标签
-                self.tags = tag
-                # 日志文件路径
-                self.log_path = log_path
-                # 日志文件
-                tail_f = self.__tail_log(log_path)
-                self.log_file = tail_f
-
-            else:
-                print "log_path: {} not find".format(log_path)
+        if os.path.exists(log_path):
+            tag = {
+                "name": self.server_name,
+                "ip": self.server_ip,
+                "project": self.project,
+                "path": log_path
+            }
+            # 标签
+            self.tags = tag
+            # 日志文件路径
+            self.log_path = log_path
+            # 日志文件
+            tail_f = self.__tail_log(log_path)
+            self.log_file = tail_f
+        else:
+            print "log_path: {} not find".format(log_path)
 
     def __tail_log(self, log_path):
 
@@ -171,13 +172,14 @@ def main():
     for log in log_list:
         workers.append(gevent.spawn(log.monitor_start))
 
-    def stop():
+    gevent.joinall(workers)
+
+    def stop_worker():
         for log in log_list:
             log.monitor_stop()
 
-    signal.signal(signal.SIGKILL, stop)
+    signal.signal(signal.SIGKILL, stop_worker)
 
-    gevent.joinall(workers)
 
 if __name__ == "__main__":
 
