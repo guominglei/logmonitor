@@ -76,13 +76,11 @@ class SentryLog(object):
 
     def __init_sender(self):
 
-        for project, project_config in self.dns_config.items():
-
-            dns = project_config.get("dns")
-            if dns:
-                self.sender = raven.Client(
-                    dns, transport=GeventedHTTPTransport
-                )
+        dns = self.dns_config.get("dns")
+        if dns:
+            self.sender = raven.Client(
+                dns, transport=GeventedHTTPTransport
+            )
 
     def __init_info(self):
         """
