@@ -12,7 +12,6 @@ import raven
 import gevent
 import pyinotify
 
-from queue import Queue
 from raven.transport.gevent import GeventedHTTPTransport
 
 from log_util import FileObject
