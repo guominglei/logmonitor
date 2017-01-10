@@ -9,7 +9,10 @@ import os
 import sys
 import signal
 import raven
+import gevent
 import pyinotify
+
+from queue import Queue
 from raven.transport.gevent import GeventedHTTPTransport
 
 from log_util import FileObject
@@ -18,42 +21,39 @@ from log_util import FileObject
 DNS_DICT = {
 
     "userapi": {
-        "dns": ("http://8432296154ce4688a363de17a0a4e05a:"
-                "a9b1b1ab08e54383bb228a40505d93e6@192.168.204.239:9999/2"),
+        "dns": ("http://d609297712ab4017bcc88ee744aa3754:"
+                "2082c2080e4f40f2bd5e8b51049d149b@localhost:9000/2"),
         "log_path": None
     },
     "baseapi": {
-        "dns": ("http://7bc79f1d679b49269b41ba73e1e6c6f8:"
-                "5eb3955148e54df78073071d2ae661ad@192.168.204.239:9999/3"),
-        "log_path": None
-    },
-    "user": {
-        "dns": ("http://c2eaab0e7c3045ae8223fb62aca40a13:"
-                "9c7ab18120ed42baad833dfd753ae3eb@192.168.204.239:9999/4"),
+        "dns": ("http://e69dc261db4d4158873d2669308a46c8:"
+                "f8f5d9435fb44f5d91b9f06ddb43fd25@localhost:9000/4"),
         "log_path": None
     },
     "fastapi": {
-        "dns": ("http://604ad268067e445c97569e9e5ca977c7:"
-                "d40728e158dc4844bdb0930f87f2f76d@192.168.204.239:9999/5"),
-        "log_path": None,
+        "dns": ("http://88c66f483acb42348ef8ab4e0e3edb03:"
+                "99d91db22b6e410487b214c920ce7a71@localhost:9000/3"),
+        "log_path": "/opt/sports/fastapi/t_logs/t.log",
     }
 }
 
 
 class ProcessSingleFile(pyinotify.ProcessEvent):
 
-    def __init__(self, log, sender, tags, *args, **kwargs):
+    def __init__(self, log, sender, tags, queue, *args, **kwargs):
         if isinstance(log, FileObject):
             self.log = log
         else:
             self.log = FileObject(log)
         self.tags = tags
         self.sender = sender
+        self.msg_queue = queue
         super(ProcessSingleFile, self).__init__(*args, **kwargs)
 
     def process_IN_MODIFY(self, event):
         for line in self.log.read_line():
-            self.sender.captureMessage(line, tags=self.tags)
+            #self.sender.captureMessage(line, tags=self.tags)
+            self.msg_queue.put([self.sender, line, self.tags])
 
 
 class SentryLog(object):
@@ -77,6 +77,9 @@ class SentryLog(object):
         self.__init_sender()
         self.wm = pyinotify.WatchManager()
         self.notifier = pyinotify.Notifier(self.wm)
+
+        self.msg_queue = Queue()
+        self.RUN = True
 
     def __init_sender(self):
 
@@ -149,12 +152,25 @@ class SentryLog(object):
 
         self.notifier.loop()
 
+        gevent.spawn(self.sender_worker)
+
     def monitor_stop(self):
         self.notifier.stop()
+        self.RUN = False
 
     def monitor_restart(self):
         self.notifier.stop()
         self.notifier.loop()
+
+    def sender_worker(self):
+
+        msg = self.msg_queue.get()
+        while self.RUN:
+            if msg:
+                sender, msg, tags = msg
+                sender.captureMessage(msg, tags=tags)
+            else:
+                gevent.sleep(1)
 
 
 def main():
