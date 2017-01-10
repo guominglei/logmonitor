@@ -173,10 +173,9 @@ def main():
     gevent.joinall(workers)
 
     def stop_worker():
-        for log in log_list:
-            log.monitor_stop()
+        gevent.killall(workers)
 
-    signal.signal(signal.SIGKILL, stop_worker)
+    gevent.signal(signal.SIGKILL, stop_worker)
 
 
 if __name__ == "__main__":
