@@ -165,7 +165,7 @@ def main():
     def stop_worker(sig_num, addtion):
         os.killpg(os.getpgid(os.getpid()), signal.SIGKILL)
 
-    signal.signal(signal.SIGKILL, stop_worker)
+    signal.signal(signal.SIGTERM, stop_worker)
 
     workers = []
     for log in log_list:
