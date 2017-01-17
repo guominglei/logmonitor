@@ -9,7 +9,6 @@ import os
 import sys
 import signal
 import raven
-import gevent
 import pyinotify
 
 from multiprocessing import Process
@@ -50,7 +49,6 @@ class ProcessSingleFile(pyinotify.ProcessEvent):
     def process_IN_MODIFY(self, event):
         for line in self.log.read_line():
             self.sender.captureMessage(line, tags=self.tags)
-            gevent.sleep(0.1)
 
 
 class SentryLog(object):
