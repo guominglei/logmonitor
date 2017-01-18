@@ -18,3 +18,12 @@ DNS_DICT = {
         "log_path": "/opt/sports/fastapi/t_logs/t.log",
     }
 }
+
+SERVER = {
+
+    "name": "test",
+    "ip": "123"
+}
+
+
+BASE_DIR = "/opt/sports"

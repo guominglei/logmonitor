@@ -16,7 +16,7 @@ import pyinotify
 from raven.transport.gevent import GeventedHTTPTransport
 
 from log_util import FileObject
-from conf import DNS_DICT
+from conf import DNS_DICT, SERVER, BASE_DIR
 
 
 class ProcessSingleFile(pyinotify.ProcessEvent):
@@ -129,24 +129,11 @@ class SentryLog(object):
 def main():
 
     log_list = []
-    if len(sys.argv) == 4:
-        server_name, server_ip, basedir = sys.argv[1:]
-        for project, dns_config in DNS_DICT.items():
-            sentry_log = SentryLog(
-                project, dns_config, server_name, server_ip, basedir
-            )
-            log_list.append(sentry_log)
 
-    elif len(sys.argv) == 3:
-        server_name, server_ip = sys.argv[1:]
-        for project, dns_config in DNS_DICT.items():
-            sentry_log = SentryLog(
-                project, dns_config, server_name, server_ip)
-            log_list.append(sentry_log)
-    else:
-        print "params error"
-        print "python xx.py server_name server_ip, basedir"
-        sys.exit()
+    for project, dns_config in DNS_DICT.items():
+        sentry_log = SentryLog(
+            project, dns_config, SERVER["name"], SERVER["ip"], BASE_DIR)
+        log_list.append(sentry_log)
 
     workers = []
     for log in log_list:
